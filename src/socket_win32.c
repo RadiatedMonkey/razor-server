@@ -7,7 +7,7 @@ struct UDPSocket* rzUDPSocketNew(unsigned short port)
 {
     struct UDPSocket* udpSocket = (struct UDPSocket*)malloc(sizeof(struct UDPSocket));
     if (!udpSocket) {
-        fprintf(stderr, "UDPSocket malloc failed\n");
+        fprintf(stderr, "ERROR: UDPSocket malloc failed\n");
         return 0;
     }
 
@@ -15,14 +15,14 @@ struct UDPSocket* rzUDPSocketNew(unsigned short port)
 
     int iResult = WSAStartup(MAKEWORD(2u, 2u), &udpSocket->wsa);
     if (iResult != 0) {
-        fprintf(stderr, "WSAStartup failed %d\n", iResult);
+        fprintf(stderr, "ERROR: WSAStartup failed %d\n", iResult);
         free(udpSocket);
         return 0;
     }
 
     SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock == INVALID_SOCKET) {
-        fprintf(stderr, "Socket creation failed: %d\n", WSAGetLastError());
+        fprintf(stderr, "ERROR: Socket creation failed: %d\n", WSAGetLastError());
         WSACleanup();
         free(udpSocket);
         return 0;
@@ -36,7 +36,7 @@ struct UDPSocket* rzUDPSocketNew(unsigned short port)
 
     int bindResult = bind(udpSocket->netSocket, (struct sockaddr*)&server, sizeof(server));
     if (bindResult == SOCKET_ERROR) {
-        fprintf(stderr, "Socket binding failed: %d\n", WSAGetLastError());
+        fprintf(stderr, "ERROR: Socket binding failed: %d\n", WSAGetLastError());
         closesocket(udpSocket->netSocket);
         WSACleanup();
         free(udpSocket);
@@ -59,8 +59,7 @@ int rzUDPSocketRecv(struct UDPSocket* udpSocket)
 {
     int receiveSize = recvfrom(
             udpSocket->netSocket, udpSocket->buffer, RECEIVE_BUFFER_SIZE,
-            0, (struct sockaddr*)&udpSocket->sender,
-            &udpSocket->senderLength
+            0, (struct sockaddr*)&udpSocket->sender, &udpSocket->senderLength
     );
     if (receiveSize == SOCKET_ERROR) {
         fprintf(stderr, "Failed to receive packet from sender: %d\n", WSAGetLastError());

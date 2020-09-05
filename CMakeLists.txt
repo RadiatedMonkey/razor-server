@@ -6,7 +6,7 @@ set(CMAKE_C_STANDARD 11)
 add_executable(
         Razor
         src/main.c
-)
+        src/socket_posix.c)
 
 target_include_directories(Razor PRIVATE include)
 

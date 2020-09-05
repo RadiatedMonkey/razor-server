@@ -19,9 +19,15 @@ struct UDPSocket {
     int senderLength;
 };
 #else
+#include <arpa/inet.h>
+#include <sys/socket.h>
+
 struct UDPSocket {
     unsigned short port;
     char buffer[RECEIVE_BUFFER_SIZE];
+    int netSocket;
+    struct sockaddr_in sender;
+    int senderLength;
 };
 #endif
 
