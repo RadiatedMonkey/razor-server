@@ -11,8 +11,10 @@ int main(void) {
 
     while(1) {
         int receiveSize = rzUDPSocketRecv(udpSocket);
-
         if (!receiveSize) break;
+
+        int sendResult = rzUDPSocketSend(udpSocket, udpSocket->buffer, receiveSize, (struct sockaddr*)&udpSocket->sender);
+        if (sendResult != 0) break;
     }
 
     rzUDPSocketFree(udpSocket);

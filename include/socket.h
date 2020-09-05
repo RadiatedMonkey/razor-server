@@ -32,7 +32,7 @@ struct UDPSocket* rzUDPSocketNew(unsigned short port);
 int rzUDPSocketRecv(struct UDPSocket* udpSocket);
 
 // Sends a specified amount of bytes from buffer to the recipient
-void rzUDPSocketSend(struct UDPSocket* udpSocket, const char* buffer, int bufferLength);
+int rzUDPSocketSend(struct UDPSocket* udpSocket, const char* buffer, int bufferSize, struct sockaddr* recipient);
 
 // Destroys created objects and frees all memory
 void rzUDPSocketFree(struct UDPSocket* udpSocket);

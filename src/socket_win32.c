@@ -43,7 +43,7 @@ struct UDPSocket* rzUDPSocketNew(unsigned short port)
         return 0;
     }
 
-    printf("Running on port %d\n", port);
+    printf("INFO: Running on port %d\n", port);
 
     return udpSocket;
 }
@@ -67,20 +67,28 @@ int rzUDPSocketRecv(struct UDPSocket* udpSocket)
         return 0;
     }
 
-    printf("Received packet from %s:%d\n", inet_ntoa(udpSocket->sender.sin_addr), ntohs(udpSocket->sender.sin_port));
-    printf("Data: ");
+    printf(
+            "INFO: Received packet from %s:%d\n",
+            inet_ntoa(udpSocket->sender.sin_addr), ntohs(udpSocket->sender.sin_port)
+    );
+    printf("INFO: Data: ");
     for(int i = 0; i < receiveSize; i++) {
         printf("%c", udpSocket->buffer[i]);
     }
-    printf("\n");
+    printf(" (%i bytes)\n", receiveSize);
 
     return receiveSize;
 }
 
-void rzUDPSocketSend(struct UDPSocket* udpSocket, const char* buffer, int bufferLength)
+int rzUDPSocketSend(struct UDPSocket* udpSocket, const char* buffer, int bufferSize, struct sockaddr* recipient)
 {
-    // Unimplemented
-    (void)udpSocket;
-    (void)buffer;
-    (void)bufferLength;
+    int sendResult = sendto(udpSocket->netSocket, buffer, bufferSize, 0, recipient, sizeof(struct sockaddr));
+    if (sendResult == SOCKET_ERROR) {
+        fprintf(stderr, "sendto failed: %d\n", WSAGetLastError());
+        return 1;
+    }
+
+    printf("INFO: Sent %d bytes to %s:%d\n", bufferSize, inet_ntoa(udpSocket->sender.sin_addr), ntohs(udpSocket->sender.sin_port));
+
+    return 0;
 }
