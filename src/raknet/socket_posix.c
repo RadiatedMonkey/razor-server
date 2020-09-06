@@ -3,15 +3,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct RZUDPSocket* rzUDPSocketNew(unsigned short port)
+struct UDPSocket* UDPSocketNew(unsigned short port)
 {
-    struct RZUDPSocket* udpSocket = (struct RZUDPSocket*)malloc(sizeof(struct RZUDPSocket));
+    struct UDPSocket* udpSocket = (struct UDPSocket*)malloc(sizeof(struct UDPSocket));
     if (!udpSocket) {
-        fprintf(stderr, "[ERROR] UDPSocket memory allocation failure\n");
+        fprintf(stderr, "[ERROR] UDPSocket malloc failed\n");
         return 0;
     }
-
-    udpSocket->senderLength = sizeof(udpSocket->sender);
 
     int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (sock == -1) {
@@ -39,31 +37,50 @@ struct RZUDPSocket* rzUDPSocketNew(unsigned short port)
     return udpSocket;
 }
 
-void rzUDPSocketFree(struct RZUDPSocket* udpSocket)
+void UDPSocketFree(struct UDPSocket* udpSocket)
 {
     close(udpSocket->netSocket);
     free(udpSocket);
 }
 
-int rzUDPSocketRecv(struct RZUDPSocket* udpSocket)
+struct Packet* UDPSocketRecv(struct UDPSocket* udpSocket)
 {
+    struct Packet* packet = packetNew();
+    if (!packet) {
+        fprintf(stderr, "[ERROR] Failed to initialize packet\n");
+        return 0;
+    }
+
     int receiveSize = recvfrom(
         udpSocket->netSocket, udpSocket->buffer, RECEIVE_BUFFER_SIZE,
-        0, (struct sockaddr*)&udpSocket->sender, &udpSocket->senderLength
+        0, (struct sockaddr*)&packet->addr, &packet->addrSize
     );
     if (receiveSize == -1) {
         fprintf(stderr, "[ERROR] Failed to receive packet from sender\n");
         return 0;
     }
 
-    return receiveSize;
+    packet->buffer = (char*)malloc(receiveSize);
+    if (!packet->buffer) {
+        fprintf(stderr, "[ERROR] Packet buffer malloc failed\n");
+        free(packet);
+        return 0;
+    }
+
+    packet->size = receiveSize;
+    memcpy(packet->buffer, udpSocket->buffer, receiveSize);
+
+    return packet;
 }
 
-int rzUDPSocketSend(struct RZUDPSocket* udpSocket, const char* buffer, int bufferSize, struct sockaddr* recipient)
+int UDPSocketSend(struct UDPSocket* udpSocket, struct Packet* packet)
 {
-    int sendResult = sendto(udpSocket->netSocket, buffer, bufferSize, 0, recipient, sizeof(struct sockaddr));
+    int sendResult = sendto(
+        udpSocket->netSocket, packet->buffer, packet->size,
+        0, (struct sockaddr*)&packet->addr, sizeof(struct sockaddr)
+    );
     if (sendResult == -1) {
-        fprintf(stderr, "[ERROR] Failed to send packet to recipient\n");
+        fprintf(stderr, "[ERROR] Failed to send packet\n");
         return -1;
     }
 

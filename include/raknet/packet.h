@@ -1,5 +1,5 @@
-#ifndef RZ_PACKET_H
-#define RZ_PACKET_H
+#ifndef RZ_RAKNET_PACKET_H
+#define RZ_RAKNET_PACKET_H
 
 #ifdef WIN32
 #include <winsock2.h>
@@ -7,14 +7,34 @@
 #include <sys/socket.h>
 #endif
 
-struct RZPacket {
+#include "identifiers.h"
+
+struct Packet {
     int size;
     char* buffer;
     struct sockaddr_in addr;
     int addrSize;
 };
 
-struct RZPacket* rzPacketNew();
-void rzPacketFree(struct RZPacket* packet);
+/*
+ * packetNew
+ *
+ * @brief Creates a new packet and initializes the addrSize member
+ */
+struct Packet* packetNew();
 
-#endif // RZ_PACKET
+/*
+ * packetFree
+ *
+ * @brief Frees the packet including the buffer it contains
+ */
+void packetFree(struct Packet* packet);
+
+/*
+ * packetGetIdentifier
+ *
+ * @brief Returns the identifier of the packet (UnconnectedPing, UnconnectedPong, etc.)
+ */
+enum MessageID packetGetIdentifier(struct Packet* packet);
+
+#endif // RZ_RAKNET_PACKET

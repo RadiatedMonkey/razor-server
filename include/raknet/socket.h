@@ -1,17 +1,16 @@
-#ifndef RZ_SOCKET_H
-#define RZ_SOCKET_H
+#ifndef RZ_RAKNET_SOCKET_H
+#define RZ_RAKNET_SOCKET_H
 
 #include "packet.h"
 
 #define RECEIVE_BUFFER_SIZE 1500
 
 #ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
 #include <WinSock2.h>
 
 #pragma comment(lib, "ws2_32.lib")
 
-struct RZUDPSocket {
+struct UDPSocket {
     unsigned short port;
     WSADATA wsa;
     SOCKET netSocket; // socket is already used by a winsock2 function
@@ -21,7 +20,7 @@ struct RZUDPSocket {
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
-struct RZUDPSocket {
+struct UDPSocket {
     unsigned short port;
     int netSocket;
     char buffer[RECEIVE_BUFFER_SIZE];
@@ -29,39 +28,39 @@ struct RZUDPSocket {
 #endif
 
 /*
- *  rzUDPSocketNew
+ *  UDPSocketNew
  *  @brief  Creates a new cross-platform UDP socket on the specified port
  *
  *  @details (This function is only used internally, you shouldn't have to use this)
  */
-struct RZUDPSocket* rzUDPSocketNew(unsigned short port);
+struct UDPSocket* UDPSocketNew(unsigned short port);
 
 /*
- *  rzUDPSocketRecv
+ *  UDPSocketRecv
  *  @brief  Receives a packet from a client.
  *
  *  @details This function returns the amount of bytes received and stores the data in the buffer field
  *  of the RZUDPSocket struct.
  *  (This function is only used internally, you shouldn't have to use this)
  */
-struct RZPacket* rzUDPSocketRecv(struct RZUDPSocket* udpSocket);
+struct Packet* UDPSocketRecv(struct UDPSocket* udpSocket);
 
 /*
- *  rzUDPSocketSend
+ *  UDPSocketSend
  *  @brief Sends data to a specified client
  *
  *  @details  Sends bufferSize bytes from buffer to the specified recipient.
  *  This functions returns 0 on success and -1 when an error occurred.
  *  (This function is only used internally, you shouldn't have to use this)
  */
-int rzUDPSocketSend(struct RZUDPSocket* udpSocket, struct RZPacket* packet);
+int UDPSocketSend(struct UDPSocket* udpSocket, struct Packet* packet);
 
 /*
- *  rzUDPSocketFree
- *  @brief  Frees the entire RZUDPSocket struct
+ *  UDPSocketFree
+ *  @brief  Frees the entire UDPSocket struct
  *
  *  @details (This functions is used internally, you shouldn't have to use this)
  */
-void rzUDPSocketFree(struct RZUDPSocket* udpSocket);
+void UDPSocketFree(struct UDPSocket* udpSocket);
 
-#endif
+#endif // RZ_RAKNET_SOCKET_H

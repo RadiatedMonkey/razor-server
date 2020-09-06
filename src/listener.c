@@ -4,24 +4,22 @@
 #include <stdlib.h>
 #include <ws2tcpip.h>
 
-#include "raknet/packet.h"
-
-struct RZListener* rzListenerNew(unsigned short port, unsigned short maxConnections)
+struct Listener* listenerNew(unsigned short port, unsigned short maxConnections)
 {
-    struct RZListener* listener = (struct RZListener*)malloc(sizeof(struct RZListener));
+    struct Listener* listener = (struct Listener*)malloc(sizeof(struct Listener));
     if (!listener) {
         fprintf(stderr, "[ERROR] RZListener malloc failed\n");
         return 0;
     }
 
-    listener->clients = (RZClientSocket*)malloc(sizeof(RZClientSocket) * maxConnections);
+    listener->clients = (ClientSocket*)malloc(sizeof(ClientSocket) * maxConnections);
     if (!listener->clients) {
         fprintf(stderr, "[ERROR] Clients malloc failed\n");
         free(listener);
         return 0;
     }
 
-    listener->udpSocket = rzUDPSocketNew(port);
+    listener->udpSocket = UDPSocketNew(port);
     if (!listener->udpSocket) {
         fprintf(stderr, "[ERROR] Failed to start UDP socket\n");
         free(listener);
@@ -34,18 +32,18 @@ struct RZListener* rzListenerNew(unsigned short port, unsigned short maxConnecti
     return listener;
 }
 
-void rzListenerFree(struct RZListener* listener)
+void listenerFree(struct Listener* listener)
 {
-    rzUDPSocketFree(listener->udpSocket);
+    UDPSocketFree(listener->udpSocket);
     free(listener);
 }
 
-int rzListenerListen(struct RZListener* listener)
+int listenerListen(struct Listener* listener)
 {
     listener->running = 1;
 
     while (listener->running) {
-        struct RZPacket* packet = rzUDPSocketRecv(listener->udpSocket);
+        struct Packet* packet = UDPSocketRecv(listener->udpSocket);
         if (packet->size == -1) {
             fprintf(stderr, "[ERROR] rzUDPSocketRecv failed\n");
             continue;
@@ -64,15 +62,15 @@ int rzListenerListen(struct RZListener* listener)
         }
         printf(" (%i bytes)\n", packet->size);
 
-        rzPacketFree(packet);
+        packetFree(packet);
     }
 
     return 0;
 }
 
-int rzListenerAdjustMaxConnections(struct RZListener* listener, unsigned short maxConnections)
+int listenerAdjustMaxConnections(struct Listener* listener, unsigned short maxConnections)
 {
-    RZClientSocket* newBlock = realloc(listener->clients, maxConnections);
+    ClientSocket* newBlock = realloc(listener->clients, maxConnections);
     if (!newBlock) {
         fprintf(stderr, "[ERROR] Clients realloc failed\n");
         return -1;

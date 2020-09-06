@@ -3,9 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct RZUDPSocket* rzUDPSocketNew(unsigned short port)
+struct UDPSocket* UDPSocketNew(unsigned short port)
 {
-    struct RZUDPSocket* udpSocket = (struct RZUDPSocket*)malloc(sizeof(struct RZUDPSocket));
+    struct UDPSocket* udpSocket = (struct UDPSocket*)malloc(sizeof(struct UDPSocket));
     if (!udpSocket) {
         fprintf(stderr, "[ERROR] UDPSocket malloc failed\n");
         return 0;
@@ -18,7 +18,7 @@ struct RZUDPSocket* rzUDPSocketNew(unsigned short port)
         return 0;
     }
 
-    SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
+    SOCKET sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (sock == INVALID_SOCKET) {
         fprintf(stderr, "[ERROR] Socket creation failed: %d\n", WSAGetLastError());
         WSACleanup();
@@ -46,16 +46,16 @@ struct RZUDPSocket* rzUDPSocketNew(unsigned short port)
     return udpSocket;
 }
 
-void rzUDPSocketFree(struct RZUDPSocket* udpSocket)
+void UDPSocketFree(struct UDPSocket* udpSocket)
 {
     closesocket(udpSocket->netSocket);
     WSACleanup();
     free(udpSocket);
 }
 
-struct RZPacket* rzUDPSocketRecv(struct RZUDPSocket* udpSocket)
+struct Packet* UDPSocketRecv(struct UDPSocket* udpSocket)
 {
-    struct RZPacket* packet = rzPacketNew();
+    struct Packet* packet = packetNew();
     if (!packet) {
         fprintf(stderr, "[ERROR] Failed to initialize packet\n");
         return 0;
@@ -66,14 +66,14 @@ struct RZPacket* rzUDPSocketRecv(struct RZUDPSocket* udpSocket)
             0, (struct sockaddr*)&packet->addr, &packet->addrSize
     );
     if (receiveSize == SOCKET_ERROR) {
-        fprintf(stderr, "[ERROR] recvfrom failed: %d\n", WSAGetLastError());
+        fprintf(stderr, "[ERROR] Failed to receive packet from sender: %d\n", WSAGetLastError());
         free(packet);
         return 0;
     }
 
     packet->buffer = (char*)malloc(receiveSize);
     if (!packet->buffer) {
-        fprintf(stderr, "[ERROR] packet buffer malloc failed\n");
+        fprintf(stderr, "[ERROR] Packet buffer malloc failed\n");
         free(packet);
         return 0;
     }
@@ -84,14 +84,14 @@ struct RZPacket* rzUDPSocketRecv(struct RZUDPSocket* udpSocket)
     return packet;
 }
 
-int rzUDPSocketSend(struct RZUDPSocket* udpSocket, struct RZPacket* packet)
+int UDPSocketSend(struct UDPSocket* udpSocket, struct Packet* packet)
 {
     int sendResult = sendto(
             udpSocket->netSocket, packet->buffer, packet->size,
-            0, (struct sockaddr*)&packet->addr, sizeof(struct sockaddr)
+            0, (struct sockaddr*)&packet->addr, packet->addrSize
     );
-    if (sendResult == SOCKET_ERROR) {
-        fprintf(stderr, "[ERROR] sendto failed: %d\n", WSAGetLastError());
+    if (sendResult == -1) {
+        fprintf(stderr, "[ERROR] Failed to send packet: %d\n", WSAGetLastError());
         return -1;
     }
 
