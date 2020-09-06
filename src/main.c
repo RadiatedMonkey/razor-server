@@ -1,22 +1,16 @@
 #include <stdio.h>
 
-#include "socket.h"
+#include "listener.h"
 
 int main(void) {
-    struct UDPSocket* udpSocket = rzUDPSocketNew(19132);
-    if (!udpSocket) {
-        fprintf(stderr, "Failed to create UDP socket\n");
+    struct RZListener* listener = rzListenerNew(19132, 250);
+    if (!listener) {
+        fprintf(stderr, "Failed to start listener on port %d\n", 19132);
         return 1;
     }
 
-    while(1) {
-        int receiveSize = rzUDPSocketRecv(udpSocket);
-        if (!receiveSize) break;
+    int returnCode = rzListenerListen(listener);
 
-        int sendResult = rzUDPSocketSend(udpSocket, udpSocket->buffer, receiveSize, (struct sockaddr*)&udpSocket->sender);
-        if (sendResult != 0) break;
-    }
-
-    rzUDPSocketFree(udpSocket);
-    return 0;
+    rzListenerFree(listener);
+    return returnCode;
 }

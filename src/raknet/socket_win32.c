@@ -1,28 +1,28 @@
-#include "socket.h"
+#include "raknet/socket.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
-struct UDPSocket* rzUDPSocketNew(unsigned short port)
+struct RZUDPSocket* rzUDPSocketNew(unsigned short port)
 {
-    struct UDPSocket* udpSocket = (struct UDPSocket*)malloc(sizeof(struct UDPSocket));
+    struct RZUDPSocket* udpSocket = (struct RZUDPSocket*)malloc(sizeof(struct RZUDPSocket));
     if (!udpSocket) {
-        fprintf(stderr, "ERROR: UDPSocket malloc failed\n");
+        fprintf(stderr, "[ERROR] UDPSocket malloc failed\n");
         return 0;
     }
 
     udpSocket->senderLength = sizeof(udpSocket->sender);
 
-    int iResult = WSAStartup(MAKEWORD(2u, 2u), &udpSocket->wsa);
+    int iResult = WSAStartup(MAKEWORD(2, 2), &udpSocket->wsa);
     if (iResult != 0) {
-        fprintf(stderr, "ERROR: WSAStartup failed %d\n", iResult);
+        fprintf(stderr, "[ERROR] WSAStartup failed %d\n", iResult);
         free(udpSocket);
         return 0;
     }
 
     SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock == INVALID_SOCKET) {
-        fprintf(stderr, "ERROR: Socket creation failed: %d\n", WSAGetLastError());
+        fprintf(stderr, "[ERROR] Socket creation failed: %d\n", WSAGetLastError());
         WSACleanup();
         free(udpSocket);
         return 0;
@@ -36,41 +36,41 @@ struct UDPSocket* rzUDPSocketNew(unsigned short port)
 
     int bindResult = bind(udpSocket->netSocket, (struct sockaddr*)&server, sizeof(server));
     if (bindResult == SOCKET_ERROR) {
-        fprintf(stderr, "ERROR: Socket binding failed: %d\n", WSAGetLastError());
+        fprintf(stderr, "[ERROR] Socket binding failed: %d\n", WSAGetLastError());
         closesocket(udpSocket->netSocket);
         WSACleanup();
         free(udpSocket);
         return 0;
     }
 
-    printf("INFO: Running on port %d\n", port);
+    printf("[INFO] Running on port %d\n", port);
 
     return udpSocket;
 }
 
-void rzUDPSocketFree(struct UDPSocket* udpSocket)
+void rzUDPSocketFree(struct RZUDPSocket* udpSocket)
 {
     closesocket(udpSocket->netSocket);
     WSACleanup();
     free(udpSocket);
 }
 
-int rzUDPSocketRecv(struct UDPSocket* udpSocket)
+int rzUDPSocketRecv(struct RZUDPSocket* udpSocket)
 {
     int receiveSize = recvfrom(
             udpSocket->netSocket, udpSocket->buffer, RECEIVE_BUFFER_SIZE,
             0, (struct sockaddr*)&udpSocket->sender, &udpSocket->senderLength
     );
     if (receiveSize == SOCKET_ERROR) {
-        fprintf(stderr, "Failed to receive packet from sender: %d\n", WSAGetLastError());
+        fprintf(stderr, "[ERROR] recvfrom failed: %d\n", WSAGetLastError());
         return 0;
     }
 
     printf(
-            "INFO: Received packet from %s:%d\n",
+            "[INFO] Received packet from %s:%d\n",
             inet_ntoa(udpSocket->sender.sin_addr), ntohs(udpSocket->sender.sin_port)
     );
-    printf("INFO: Data: ");
+    printf("[INFO] Data: ");
     for(int i = 0; i < receiveSize; i++) {
         printf("%c", udpSocket->buffer[i]);
     }
@@ -79,15 +79,15 @@ int rzUDPSocketRecv(struct UDPSocket* udpSocket)
     return receiveSize;
 }
 
-int rzUDPSocketSend(struct UDPSocket* udpSocket, const char* buffer, int bufferSize, struct sockaddr* recipient)
+int rzUDPSocketSend(struct RZUDPSocket* udpSocket, const char* buffer, int bufferSize, struct sockaddr* recipient)
 {
     int sendResult = sendto(udpSocket->netSocket, buffer, bufferSize, 0, recipient, sizeof(struct sockaddr));
     if (sendResult == SOCKET_ERROR) {
-        fprintf(stderr, "sendto failed: %d\n", WSAGetLastError());
-        return 1;
+        fprintf(stderr, "[ERROR] sendto failed: %d\n", WSAGetLastError());
+        return -1;
     }
 
-    printf("INFO: Sent %d bytes to %s:%d\n", bufferSize, inet_ntoa(udpSocket->sender.sin_addr), ntohs(udpSocket->sender.sin_port));
+    printf("[INFO] Sent %d bytes to %s:%d\n", bufferSize, inet_ntoa(udpSocket->sender.sin_addr), ntohs(udpSocket->sender.sin_port));
 
     return 0;
 }
