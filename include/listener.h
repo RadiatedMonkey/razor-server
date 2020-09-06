@@ -16,6 +16,7 @@ struct Listener {
     unsigned short maxConnections;
     _Bool running;
     ClientSocket* clients;
+    const char* pongData;
 };
 
 /*
@@ -25,7 +26,7 @@ struct Listener {
  *  @details This function creates a new listener that will run on the specified port and only accept a specified
  *  amount of connections, use listenerListen to start the listener
  */
-struct Listener* listenerNew(unsigned short port, unsigned short maxConnections);
+struct Listener* listenerNew(unsigned short port, unsigned short maxConnections, const char* pongData);
 
 /*
  *  listenerFree

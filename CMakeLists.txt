@@ -1,13 +1,15 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.0)
 project(Razor C)
 
 set(CMAKE_C_STANDARD 11)
 
 add_executable(
         Razor
+
         src/main.c
         src/listener.c
         src/raknet/packet.c
+        src/raknet/packet_handler.c
 )
 
 target_include_directories(Razor PRIVATE include)

@@ -4,7 +4,9 @@
 #include <stdlib.h>
 #include <ws2tcpip.h>
 
-struct Listener* listenerNew(unsigned short port, unsigned short maxConnections)
+#include "raknet/packet_handler.h"
+
+struct Listener* listenerNew(unsigned short port, unsigned short maxConnections, const char* pongData)
 {
     struct Listener* listener = (struct Listener*)malloc(sizeof(struct Listener));
     if (!listener) {
@@ -28,6 +30,7 @@ struct Listener* listenerNew(unsigned short port, unsigned short maxConnections)
 
     listener->maxConnections = maxConnections;
     listener->running = 0;
+    listener->pongData = pongData;
 
     return listener;
 }
@@ -45,7 +48,7 @@ int listenerListen(struct Listener* listener)
     while (listener->running) {
         struct Packet* packet = UDPSocketRecv(listener->udpSocket);
         if (packet->size == -1) {
-            fprintf(stderr, "[ERROR] rzUDPSocketRecv failed\n");
+            fprintf(stderr, "[ERROR] UDPSocketRecv failed\n");
             continue;
         }
 
@@ -61,6 +64,8 @@ int listenerListen(struct Listener* listener)
             printf("%c", packet->buffer[i]);
         }
         printf(" (%i bytes)\n", packet->size);
+
+        handlePacket(listener, packet);
 
         packetFree(packet);
     }

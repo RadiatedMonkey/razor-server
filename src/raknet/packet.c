@@ -33,15 +33,7 @@ void packetFree(struct Packet* packet)
 
 enum MessageID packetGetIdentifier(struct Packet* pk)
 {
-    (void)pk;
-//    if (pk->buffer == 0)
-//        return 0;
-//
-//    if ((unsigned char)pk->buffer[0] == ID_TIMESTAMP) {
-//        assert(pk->size > sizeof(MessageID) + sizeof(RZTimestamp));
-//        return (unsigned char) pk->buffer[sizeof(RZMessageID) + sizeof(RZTimestamp)];
-//    } else
-//        return (unsigned char)pk->buffer[0];
+    if (pk->buffer == 0) return 0;
 
-    return 0;
+    return pk->buffer[0];
 }
