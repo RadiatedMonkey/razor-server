@@ -1,22 +1,21 @@
 #ifndef RZ_SOCKET_H
 #define RZ_SOCKET_H
 
+#include "packet.h"
+
 #define RECEIVE_BUFFER_SIZE 1500
 
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <WinSock2.h>
 
 #pragma comment(lib, "ws2_32.lib")
 
 struct RZUDPSocket {
     unsigned short port;
-    char buffer[RECEIVE_BUFFER_SIZE];
     WSADATA wsa;
     SOCKET netSocket; // socket is already used by a winsock2 function
-    struct sockaddr_in sender;
-    int senderLength;
+    char buffer[RECEIVE_BUFFER_SIZE];
 };
 #else
 #include <arpa/inet.h>
@@ -24,10 +23,8 @@ struct RZUDPSocket {
 
 struct RZUDPSocket {
     unsigned short port;
-    char buffer[RECEIVE_BUFFER_SIZE];
     int netSocket;
-    struct sockaddr_in sender;
-    int senderLength;
+    char buffer[RECEIVE_BUFFER_SIZE];
 };
 #endif
 
@@ -47,7 +44,7 @@ struct RZUDPSocket* rzUDPSocketNew(unsigned short port);
  *  of the RZUDPSocket struct.
  *  (This function is only used internally, you shouldn't have to use this)
  */
-int rzUDPSocketRecv(struct RZUDPSocket* udpSocket);
+struct RZPacket* rzUDPSocketRecv(struct RZUDPSocket* udpSocket);
 
 /*
  *  rzUDPSocketSend
@@ -57,7 +54,7 @@ int rzUDPSocketRecv(struct RZUDPSocket* udpSocket);
  *  This functions returns 0 on success and -1 when an error occurred.
  *  (This function is only used internally, you shouldn't have to use this)
  */
-int rzUDPSocketSend(struct RZUDPSocket* udpSocket, const char* buffer, int bufferSize, struct sockaddr* recipient);
+int rzUDPSocketSend(struct RZUDPSocket* udpSocket, struct RZPacket* packet);
 
 /*
  *  rzUDPSocketFree

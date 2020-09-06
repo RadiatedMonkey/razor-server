@@ -11,8 +11,6 @@ struct RZUDPSocket* rzUDPSocketNew(unsigned short port)
         return 0;
     }
 
-    udpSocket->senderLength = sizeof(udpSocket->sender);
-
     int iResult = WSAStartup(MAKEWORD(2, 2), &udpSocket->wsa);
     if (iResult != 0) {
         fprintf(stderr, "[ERROR] WSAStartup failed %d\n", iResult);
@@ -55,39 +53,47 @@ void rzUDPSocketFree(struct RZUDPSocket* udpSocket)
     free(udpSocket);
 }
 
-int rzUDPSocketRecv(struct RZUDPSocket* udpSocket)
+struct RZPacket* rzUDPSocketRecv(struct RZUDPSocket* udpSocket)
 {
-    int receiveSize = recvfrom(
-            udpSocket->netSocket, udpSocket->buffer, RECEIVE_BUFFER_SIZE,
-            0, (struct sockaddr*)&udpSocket->sender, &udpSocket->senderLength
-    );
-    if (receiveSize == SOCKET_ERROR) {
-        fprintf(stderr, "[ERROR] recvfrom failed: %d\n", WSAGetLastError());
+    struct RZPacket* packet = rzPacketNew();
+    if (!packet) {
+        fprintf(stderr, "[ERROR] Failed to initialize packet\n");
         return 0;
     }
 
-    printf(
-            "[INFO] Received packet from %s:%d\n",
-            inet_ntoa(udpSocket->sender.sin_addr), ntohs(udpSocket->sender.sin_port)
+    int receiveSize = recvfrom(
+            udpSocket->netSocket, udpSocket->buffer, RECEIVE_BUFFER_SIZE,
+            0, (struct sockaddr*)&packet->addr, &packet->addrSize
     );
-    printf("[INFO] Data: ");
-    for(int i = 0; i < receiveSize; i++) {
-        printf("%c", udpSocket->buffer[i]);
+    if (receiveSize == SOCKET_ERROR) {
+        fprintf(stderr, "[ERROR] recvfrom failed: %d\n", WSAGetLastError());
+        free(packet);
+        return 0;
     }
-    printf(" (%i bytes)\n", receiveSize);
 
-    return receiveSize;
+    packet->buffer = (char*)malloc(receiveSize);
+    if (!packet->buffer) {
+        fprintf(stderr, "[ERROR] packet buffer malloc failed\n");
+        free(packet);
+        return 0;
+    }
+
+    packet->size = receiveSize;
+    memcpy(packet->buffer, udpSocket->buffer, receiveSize);
+
+    return packet;
 }
 
-int rzUDPSocketSend(struct RZUDPSocket* udpSocket, const char* buffer, int bufferSize, struct sockaddr* recipient)
+int rzUDPSocketSend(struct RZUDPSocket* udpSocket, struct RZPacket* packet)
 {
-    int sendResult = sendto(udpSocket->netSocket, buffer, bufferSize, 0, recipient, sizeof(struct sockaddr));
+    int sendResult = sendto(
+            udpSocket->netSocket, packet->buffer, packet->size,
+            0, (struct sockaddr*)&packet->addr, sizeof(struct sockaddr)
+    );
     if (sendResult == SOCKET_ERROR) {
         fprintf(stderr, "[ERROR] sendto failed: %d\n", WSAGetLastError());
         return -1;
     }
-
-    printf("[INFO] Sent %d bytes to %s:%d\n", bufferSize, inet_ntoa(udpSocket->sender.sin_addr), ntohs(udpSocket->sender.sin_port));
 
     return 0;
 }

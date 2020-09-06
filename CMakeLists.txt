@@ -7,6 +7,7 @@ add_executable(
         Razor
         src/main.c
         src/listener.c
+        src/raknet/packet.c
 )
 
 target_include_directories(Razor PRIVATE include)

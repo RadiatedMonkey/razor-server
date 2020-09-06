@@ -2,6 +2,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <ws2tcpip.h>
+
+#include "raknet/packet.h"
 
 struct RZListener* rzListenerNew(unsigned short port, unsigned short maxConnections)
 {
@@ -42,11 +45,26 @@ int rzListenerListen(struct RZListener* listener)
     listener->running = 1;
 
     while (listener->running) {
-        int receiveSize = rzUDPSocketRecv(listener->udpSocket);
-        if (receiveSize == -1) {
+        struct RZPacket* packet = rzUDPSocketRecv(listener->udpSocket);
+        if (packet->size == -1) {
             fprintf(stderr, "[ERROR] rzUDPSocketRecv failed\n");
             continue;
         }
+
+        char* addrString = (char*)malloc(16);
+
+        inet_ntop(AF_INET, &packet->addr.sin_addr, addrString, 16);
+        printf(
+                "[INFO] Received packet from %s:%d\n",
+                addrString, ntohs(packet->addr.sin_port)
+        );
+        printf("[INFO] Data: ");
+        for(int i = 0; i < packet->size; i++) {
+            printf("%c", packet->buffer[i]);
+        }
+        printf(" (%i bytes)\n", packet->size);
+
+        rzPacketFree(packet);
     }
 
     return 0;
